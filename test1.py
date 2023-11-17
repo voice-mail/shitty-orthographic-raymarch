@@ -6,7 +6,11 @@ pixel_array = pygame.PixelArray(screen)
 clock = pygame.time.Clock()
 running = True
 
+
+# Configuration Variables
 mapsize = [1000,1000,1000]
+maxraydistance = 600
+cameraoffset = 50
 
 # Materials Loading
 matcolors = [
@@ -47,42 +51,36 @@ def mapstructure_testcubes(px, py, pz, l, w, h):
                 
 map_array = mapgen_blank(1000, 1000, 1000)
 map_array = mappreset_singlelayer(map_array)
-mapstructure_testcubes(550, 550, 1, 10, 10, 10)
-
-
+mapstructure_testcubes(200, 400, 1, 10, 20, 1)
+mapstructure_testcubes(240, 440, 1, 20, 10, 2)
+mapstructure_testcubes(280, 480, 1, 10, 10, 3)
 
 # Graphics Functions
-def raymarch(x, y):
-    # Calculate px, py once
-    px = x + ppos[0] - 320
-    py = y + ppos[1] - 240
+def raymarch():
+    for x in range(640):
+        for y in range(480):
+            cpos = [ppos[0] - 320 + x, ppos[1] + 240 - y + cameraoffset, ppos[2] + cameraoffset ]  # Adjusted coordinate calculation
+            for i in range(maxraydistance):
+                cpos[1] -= 1
+                cpos[2] -= 1
+                if 0 <= cpos[0] < mapsize[0] and 0 <= cpos[1] < mapsize[1] and 0 <= cpos[2] < mapsize[2]:
+                    if map_array[cpos[0]][cpos[1]][cpos[2]] != 0:
+                        pixel_array[x,y] = matcolors[map_array[cpos[0]][cpos[1]][cpos[2]]]
+                        #print(cpos)
+                        break
+            else:
+                continue
+        
+        pygame.display.flip()  # Update display after all pixels have been processed
 
-    # Vectorized pz values
-    pz_values = np.arange(ppos[2] + 480, ppos[2] - 520, -1)
-
-    # Check bounds
-    if 0 <= px < mapsize[0] and 0 <= py < mapsize[1]:
-        # Get the segment of map_array that aligns with the ray
-        segment = map_array[px, py, pz_values]
-
-        # Find the first non-zero value
-        nonzero_indices = np.nonzero(segment)[0]
-        if nonzero_indices.size > 0:
-            first_hit = nonzero_indices[0]
-            return matcolors[segment[first_hit]]
-    
-    # Default color if no hit
-    return (0, 0, 0, 0)
 
 
         
 
 # Important Functions
 def frame():
-    for x in range(640):
-        for y in range(480):
-            pixel_array[x,y] = raymarch(x,y)
-    pygame.display.flip()
+    raymarch()
+    
 
 
 
